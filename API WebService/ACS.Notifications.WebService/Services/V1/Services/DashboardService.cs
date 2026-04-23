@@ -1,15 +1,12 @@
-﻿using ACS.Background;
+using ACS.Background;
 using ACS.Database.IDataAccess.NotificationsService.V1;
 using ACS.License.V1;
 using ACS.Models.Response.V1.NotificationsService.Dashboard;
 using ACS.Models.Response.V1.NotificationsService.UserNotifications;
 using ACS.Notifications.WebService.Services.V1.Interfaces;
 using ACS.Service.V1.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.Json;
 using ACS.Helper;
-using Npgsql;
-using NpgsqlTypes;
 
 namespace ACS.Notifications.WebService.Services.V1.Services
 {
@@ -26,6 +23,14 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 };
             }
         }
+
+        private IUserNotificationsDataAccess UserNotifs(Connection conn) => conn.Type switch
+        {
+            Database.IConnection.DatabaseType.PostgresDatabase =>
+                Database.DataAccess.PostgresDataAccess.NotificationsService.V1.UserNotificationsDataAccess
+                    .GetInstance($"{conn.Server}.{conn.Name}", conn.Conn),
+            _ => throw new NotSupportedException($"The database type '{conn.Type}' is not supported in DashoardService.")
+        };
 
         public void StartNotify()
         {
@@ -110,31 +115,11 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 );
         }
 
-        // ─────────────────────────────────────────────────────────────────────
-        // Paginated user notifications (load-more) + delete
-        //
-        // The compiled DataAccess DLL only exposes the pre-existing dashboard
-        // method, so these new endpoints talk to Postgres directly via Npgsql
-        // using the connection details already on the licensed Connection.
-        // ─────────────────────────────────────────────────────────────────────
-
-        private static string BuildPgConnString(Connection conn) =>
-            new NpgsqlConnectionStringBuilder
-            {
-                Host                   = string.IsNullOrEmpty(conn.Server) ? "localhost" : conn.Server,
-                Port                   = conn.Port == 0 ? 5432 : conn.Port,
-                Database               = conn.Name ?? string.Empty,
-                Username               = conn.User ?? string.Empty,
-                Password               = conn.Password ?? string.Empty,
-                SslMode                = SslMode.Prefer,
-                TrustServerCertificate = true,
-                Timeout                = 15,
-                CommandTimeout         = 30,
-            }.ConnectionString;
-
         public async Task<UserNotificationsListResponse> GetUserNotificationsAsync(
             string workspace, string user, int limit, int offset, bool unreadOnly,
-            string requestId, CancellationToken cancellationToken = default)
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -149,76 +134,39 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 }
 
                 var license = this.LicenseManager.GetLicense();
-                var conn = license!.DB!;
-                var cs = BuildPgConnString(conn);
+                var entity = await UserNotifs(license!.DB!).GetUserNotificationsAsync(
+                    wid, uid, limit, offset, unreadOnly,
+                    ip, userAgent, deviceInfo, requestId,
+                    reqLatitude, reqLongitude, cancellationToken);
 
-                await using var db = new NpgsqlConnection(cs);
-                await db.OpenAsync(cancellationToken);
-                await using var cmd = new NpgsqlCommand(
-                    "SELECT notifications_tbls_sch_v1.fun_get_user_notifications(@u, @w, @l, @o, @uo)", db);
-                cmd.Parameters.Add(new NpgsqlParameter("u",  NpgsqlDbType.Integer) { Value = uid });
-                cmd.Parameters.Add(new NpgsqlParameter("w",  NpgsqlDbType.Integer) { Value = wid });
-                cmd.Parameters.Add(new NpgsqlParameter("l",  NpgsqlDbType.Integer) { Value = limit });
-                cmd.Parameters.Add(new NpgsqlParameter("o",  NpgsqlDbType.Integer) { Value = offset });
-                cmd.Parameters.Add(new NpgsqlParameter("uo", NpgsqlDbType.Boolean) { Value = unreadOnly });
-
-                var raw = await cmd.ExecuteScalarAsync(cancellationToken);
-                if (raw is null || raw is DBNull)
-                {
-                    return new UserNotificationsListResponse(
-                        false, "Empty response from database", "DB_EMPTY", requestId,
-                        null, null, null, limit, offset, 0, 0, false, []);
-                }
-
-                using var doc = JsonDocument.Parse(raw.ToString()!);
-                var root = doc.RootElement;
-                var success = root.TryGetProperty("success", out var s) && s.GetBoolean();
-                if (!success)
-                {
-                    return new UserNotificationsListResponse(
-                        false,
-                        root.TryGetProperty("message", out var m) ? m.GetString() : "Unknown DB error",
-                        "DB_ERROR", requestId,
-                        null,
-                        root.TryGetProperty("detail", out var d) ? d.GetString() : null,
-                        null, limit, offset, 0, 0, false, []);
-                }
-
-                var items = new List<UserNotificationItem>();
-                if (root.TryGetProperty("notifications", out var arr) && arr.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var n in arr.EnumerateArray())
-                    {
-                        items.Add(new UserNotificationItem(
-                            Id:                n.LngN("id") ?? 0,
-                            Title:             n.Str("title") ?? string.Empty,
-                            Message:           n.Str("message") ?? string.Empty,
-                            IsRead:            n.TryGetProperty("is_read", out var ir) && ir.ValueKind == JsonValueKind.True,
-                            ActionUrl:         n.Str("action_url"),
-                            ActionLabel:       n.Str("action_label"),
-                            RelatedEntityType: n.Str("related_entity_type"),
-                            RelatedEntityId:   n.LngN("related_entity_id"),
-                            Priority:          n.Str("priority"),
-                            CreatedAt:         ParseDate(n, "created_at") ?? DateTime.UtcNow,
-                            ReadAt:            ParseDate(n, "read_at")
-                        ));
-                    }
-                }
+                var items = entity.Notifications?.Select(n => new UserNotificationItem(
+                    Id:                n.Id,
+                    Title:             n.Title,
+                    Message:           n.Message,
+                    IsRead:            n.IsRead,
+                    ActionUrl:         n.ActionUrl,
+                    ActionLabel:       n.ActionLabel,
+                    RelatedEntityType: n.RelatedEntityType,
+                    RelatedEntityId:   n.RelatedEntityId,
+                    Priority:          n.Priority,
+                    CreatedAt:         n.CreatedAt,
+                    ReadAt:            n.ReadAt
+                )).ToArray() ?? [];
 
                 return new UserNotificationsListResponse(
-                    Success:      true,
-                    Message:      null,
-                    ErrorCode:    string.Empty,
-                    RequestId:    requestId,
-                    GeneratedAt:  ParseDate(root, "generated_at"),
-                    Detail:       null,
-                    Timezone:     root.Str("timezone"),
-                    Limit:        root.TryGetProperty("limit",  out var lj) && lj.TryGetInt32(out var li) ? li : limit,
-                    Offset:       root.TryGetProperty("offset", out var oj) && oj.TryGetInt32(out var oi) ? oi : offset,
-                    TotalCount:   root.LngN("total_count")  ?? 0,
-                    UnreadCount:  root.LngN("unread_count") ?? 0,
-                    HasMore:      root.TryGetProperty("has_more", out var hm) && hm.ValueKind == JsonValueKind.True,
-                    Notifications: [.. items]);
+                    Success:       entity.Success,
+                    Message:       entity.Message,
+                    ErrorCode:     entity.Success ? string.Empty : "DB_ERROR",
+                    RequestId:     requestId,
+                    GeneratedAt:   entity.GeneratedAt,
+                    Detail:        entity.Detail,
+                    Timezone:      entity.Timezone,
+                    Limit:         entity.Limit == 0 ? limit : entity.Limit,
+                    Offset:        entity.Offset,
+                    TotalCount:    entity.TotalCount,
+                    UnreadCount:   entity.UnreadCount,
+                    HasMore:       entity.HasMore,
+                    Notifications: items);
             }
             catch (Exception ex)
             {
@@ -231,7 +179,9 @@ namespace ACS.Notifications.WebService.Services.V1.Services
 
         public async Task<DeleteUserNotificationResponse> DeleteUserNotificationAsync(
             string workspace, string user, long notificationId,
-            string requestId, CancellationToken cancellationToken = default)
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -243,36 +193,18 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 }
 
                 var license = this.LicenseManager.GetLicense();
-                var conn = license!.DB!;
-                var cs = BuildPgConnString(conn);
+                var entity = await UserNotifs(license!.DB!).DeleteUserNotificationAsync(
+                    wid, uid, notificationId,
+                    ip, userAgent, deviceInfo, requestId,
+                    reqLatitude, reqLongitude, cancellationToken);
 
-                await using var db = new NpgsqlConnection(cs);
-                await db.OpenAsync(cancellationToken);
-                await using var cmd = new NpgsqlCommand(
-                    "SELECT notifications_tbls_sch_v1.fun_delete_user_notification(@u, @w, @nid)", db);
-                cmd.Parameters.Add(new NpgsqlParameter("u",   NpgsqlDbType.Integer) { Value = uid });
-                cmd.Parameters.Add(new NpgsqlParameter("w",   NpgsqlDbType.Integer) { Value = wid });
-                cmd.Parameters.Add(new NpgsqlParameter("nid", NpgsqlDbType.Bigint)  { Value = notificationId });
-
-                var raw = await cmd.ExecuteScalarAsync(cancellationToken);
-                if (raw is null || raw is DBNull)
+                if (!entity.Success)
                 {
+                    var errorCode = entity.Detail == "NOT_FOUND" ? "NOT_FOUND"
+                                  : (entity.ErrorCode ?? "DB_ERROR");
                     return new DeleteUserNotificationResponse(
-                        false, "Empty response from database", "DB_EMPTY",
-                        requestId, null, null, null);
-                }
-
-                using var doc = JsonDocument.Parse(raw.ToString()!);
-                var root = doc.RootElement;
-                var success = root.TryGetProperty("success", out var s) && s.GetBoolean();
-                if (!success)
-                {
-                    var detail = root.Str("detail");
-                    var message = root.Str("message") ?? "Unable to delete notification";
-                    return new DeleteUserNotificationResponse(
-                        false, message,
-                        detail == "NOT_FOUND" ? "NOT_FOUND" : "DB_ERROR",
-                        requestId, detail, null, null);
+                        false, entity.Message ?? "Unable to delete notification",
+                        errorCode, requestId, entity.Detail, null, null);
                 }
 
                 return new DeleteUserNotificationResponse(
@@ -281,8 +213,8 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                     ErrorCode:   string.Empty,
                     RequestId:   requestId,
                     Detail:      null,
-                    DeletedId:   root.LngN("deleted_id"),
-                    UnreadCount: root.LngN("unread_count"));
+                    DeletedId:   entity.DeletedId,
+                    UnreadCount: entity.UnreadCount);
             }
             catch (Exception ex)
             {
@@ -290,15 +222,6 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 return new DeleteUserNotificationResponse(
                     false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name, null, null);
             }
-        }
-
-        private static DateTime? ParseDate(JsonElement parent, string property)
-        {
-            if (!parent.TryGetProperty(property, out var p)) return null;
-            if (p.ValueKind == JsonValueKind.Null || p.ValueKind == JsonValueKind.Undefined) return null;
-            if (p.ValueKind == JsonValueKind.String && DateTime.TryParse(p.GetString(), out var dt))
-                return DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
-            return null;
         }
     }
 }

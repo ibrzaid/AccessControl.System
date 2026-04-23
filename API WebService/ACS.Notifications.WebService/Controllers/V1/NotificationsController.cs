@@ -1,6 +1,7 @@
 using ACS.Helper.V1;
 using Asp.Versioning;
 using ACS.Models.Response;
+using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -19,6 +20,12 @@ namespace ACS.Notifications.WebService.Controllers.V1
     [ApiExplorerSettings(IgnoreApi = false)]
     public class NotificationsController(IDashboardService service, FindClaimHelper findClaimHelper) : BaseController
     {
+        private static decimal ParseCoord(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return 0m;
+            return decimal.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0m;
+        }
+
         /// <summary>
         /// Paginated list of the current user's notifications. Supports a
         /// load-more flow via `limit` / `offset`, and an `unreadOnly` filter.
@@ -26,6 +33,8 @@ namespace ACS.Notifications.WebService.Controllers.V1
         /// <param name="limit">Max items to return (1-100, default 20).</param>
         /// <param name="offset">Items to skip (default 0).</param>
         /// <param name="unreadOnly">If true, only unread notifications.</param>
+        /// <param name="latitude">Optional caller latitude (recorded in audit log).</param>
+        /// <param name="longitude">Optional caller longitude (recorded in audit log).</param>
         [HttpGet]
         [MapToApiVersion("1.0")]
         [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status401Unauthorized)]
@@ -35,7 +44,9 @@ namespace ACS.Notifications.WebService.Controllers.V1
         public async Task<IActionResult> GetUserNotificationsAsync(
             [FromQuery] int limit = 20,
             [FromQuery] int offset = 0,
-            [FromQuery] bool unreadOnly = false)
+            [FromQuery] bool unreadOnly = false,
+            [FromQuery] string? latitude = null,
+            [FromQuery] string? longitude = null)
         {
             try
             {
@@ -57,9 +68,16 @@ namespace ACS.Notifications.WebService.Controllers.V1
                 if (limit > 100) limit = 100;
                 if (offset < 0) offset = 0;
 
+                string? ip  = HttpContext.Connection.RemoteIpAddress?.ToString();
+                string? ua  = Request.Headers.UserAgent.ToString();
+                string? di  = Request.Headers["X-Device-Info"].ToString();
+                if (string.IsNullOrWhiteSpace(di)) di = null;
+
                 var response = await service.GetUserNotificationsAsync(
                     workspace, user, limit, offset, unreadOnly,
-                    requestId, HttpContext.RequestAborted);
+                    ip, ua, di, requestId,
+                    ParseCoord(latitude), ParseCoord(longitude),
+                    HttpContext.RequestAborted);
 
                 if (!response.Success) return StatusCode(500, response);
                 return Ok(response);
@@ -80,7 +98,10 @@ namespace ACS.Notifications.WebService.Controllers.V1
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(typeof(DeleteUserNotificationResponse), StatusCodes.Status200OK)]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> DeleteUserNotificationAsync([FromRoute] long id)
+        public async Task<IActionResult> DeleteUserNotificationAsync(
+            [FromRoute] long id,
+            [FromQuery] string? latitude = null,
+            [FromQuery] string? longitude = null)
         {
             try
             {
@@ -98,8 +119,16 @@ namespace ACS.Notifications.WebService.Controllers.V1
 
                 string user = findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier);
 
+                string? ip  = HttpContext.Connection.RemoteIpAddress?.ToString();
+                string? ua  = Request.Headers.UserAgent.ToString();
+                string? di  = Request.Headers["X-Device-Info"].ToString();
+                if (string.IsNullOrWhiteSpace(di)) di = null;
+
                 var response = await service.DeleteUserNotificationAsync(
-                    workspace, user, id, requestId, HttpContext.RequestAborted);
+                    workspace, user, id,
+                    ip, ua, di, requestId,
+                    ParseCoord(latitude), ParseCoord(longitude),
+                    HttpContext.RequestAborted);
 
                 if (!response.Success)
                 {

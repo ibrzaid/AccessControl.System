@@ -1,4 +1,4 @@
-﻿using ACS.Models.Response.V1.NotificationsService.Dashboard;
+using ACS.Models.Response.V1.NotificationsService.Dashboard;
 using ACS.Models.Response.V1.NotificationsService.UserNotifications;
 
 namespace ACS.Notifications.WebService.Services.V1.Interfaces
@@ -13,13 +13,17 @@ namespace ACS.Notifications.WebService.Services.V1.Interfaces
         /// </summary>
         Task<UserNotificationsListResponse> GetUserNotificationsAsync(
             string workspace, string user, int limit, int offset, bool unreadOnly,
-            string requestId, CancellationToken cancellationToken = default);
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Delete one of the user's own notifications.
         /// </summary>
         Task<DeleteUserNotificationResponse> DeleteUserNotificationAsync(
             string workspace, string user, long notificationId,
-            string requestId, CancellationToken cancellationToken = default);
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default);
     }
 }
