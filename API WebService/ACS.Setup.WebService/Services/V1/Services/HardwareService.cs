@@ -1,5 +1,6 @@
 ﻿using ACS.License.V1;
 using System.Globalization;
+using ACS.Models.Response;
 using ACS.Service.V1.Interfaces;
 using ACS.Database.IDataAccess.SetupService.V1;
 using ACS.Models.Request.V1.SetupService.Hardware;
@@ -90,6 +91,19 @@ namespace ACS.Setup.WebService.Services.V1.Services
             var db = await this[license?.DB!].DeleteHardwareAsync(workspaceId, callerId, hardwareId, ip, ua, null, requestId, 
                 ParseCoord(latitude), ParseCoord(longitude), ct);
             return MapWrite(db);
+        }
+
+
+        public Task<BaseResponse> TestHardwareAsync(int workspaceId, int callerId, int? hardwareId, TestHardwareRequest req, string? ip, string? ua, string? requestId, CancellationToken ct = default)
+        {
+            // Stub: real device interrogation will be implemented later. For now
+            // we acknowledge the request so the operator gets immediate UI
+            // feedback and we can wire the full pipeline end-to-end.
+            return Task.FromResult(new BaseResponse
+            {
+                Success   = true,
+                RequestId = requestId,
+            });
         }
 
 

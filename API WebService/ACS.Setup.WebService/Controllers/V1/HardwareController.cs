@@ -2,6 +2,7 @@ using ACS.Helper.V1;
 using Asp.Versioning;
 using ACS.BusinessEntities;
 using System.Security.Claims;
+using ACS.Models.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ACS.Models.Request.V1.SetupService.Hardware;
@@ -130,5 +131,60 @@ namespace ACS.Setup.WebService.Controllers.V1
             }
             catch (Exception ex) { return Problem(ex.Message); }
         }
+
+
+        /// <summary>
+        /// Test Hardware (connectivity / health-check probe).
+        /// Stub: currently returns Success = true. Real device interrogation
+        /// will be implemented later.
+        /// </summary>
+        /// <param name="hardwareId">Optional persisted hardware id. Pass 0 for create-mode tests.</param>
+        /// <param name="request">Candidate hardware configuration to probe.</param>
+        /// <returns></returns>
+        /// <response code="200">HTTP OK, probe acknowledged.</response>
+        /// <response code="400">HTTP Bad Request. Returned when the submitted request is invalid.</response>
+        /// <response code="401">HTTP Unauthorized.</response>
+        /// <response code="500">HTTP Internal Server Error.</response>
+        [HttpPost("{hardwareId:int}/test")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> TestHardwareAsync([FromRoute] int hardwareId, [FromBody] TestHardwareRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(new BaseResponse { Success = false, ErrorCode = "VALIDATION_ERROR", Error = string.Join(", ", ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))) });
+
+                int workspace = int.Parse(findClaimHelper.FindClaim(HttpContext, "wid"));
+                int caller    = int.Parse(findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier));
+                string ip     = HttpContext.Connection.RemoteIpAddress?.ToString()!;
+                string ua     = Request.Headers.UserAgent.ToString();
+                string rid    = GetRequestId();
+
+                int? hwId = hardwareId > 0 ? hardwareId : null;
+                var response = await service.TestHardwareAsync(workspace, caller, hwId, request, ip, ua, rid, HttpContext.RequestAborted);
+                if (!response.Success) return BadRequest(response);
+                return Ok(response);
+            }
+            catch (Exception ex) { return Problem(ex.Message); }
+        }
+
+
+        /// <summary>
+        /// Test Hardware (create-mode probe — no persisted id yet).
+        /// </summary>
+        [HttpPost("test")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public Task<IActionResult> TestHardwareDraftAsync([FromBody] TestHardwareRequest request) =>
+            TestHardwareAsync(0, request);
     }
 }
