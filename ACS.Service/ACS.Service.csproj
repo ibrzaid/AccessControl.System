@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\ACS.License\ACS.License.csproj" />
+    <ProjectReference Include="..\..\DataLayer\Database\DataAccess\ACS.Database.DataAccess\ACS.Database.DataAccess.csproj" />
+    <ProjectReference Include="..\..\DataLayer\Database\DataAccess\ACS.Database.IDataAccess\ACS.Database.IDataAccess.csproj" />
+    <ProjectReference Include="..\ACS.Helper\ACS.Helper.csproj" />
+    <ProjectReference Include="..\ACS.Models\ACS.Models.csproj" />
+  </ItemGroup>
+
+</Project>

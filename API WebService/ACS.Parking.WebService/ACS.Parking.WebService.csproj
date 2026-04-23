@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <NoWarn>$(NoWarn);1591</NoWarn>
+    <DockerfileContext>..\..\..</DockerfileContext>
+    <DockerComposeProjectPath>..\..\..\docker-compose.dcproj</DockerComposeProjectPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageReference Include="CliWrap" Version="3.10.0" />
+    <PackageReference Include="GraphQL" Version="8.8.3" />
+    <PackageReference Include="GraphQL.DataLoader" Version="8.8.3" />
+    <PackageReference Include="GraphQL.MemoryCache" Version="8.8.3" />
+    <PackageReference Include="GraphQL.Server.Transports.AspNetCore" Version="8.3.3" />
+    <PackageReference Include="GraphQL.Server.Ui.Altair" Version="8.3.3" />
+    <PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="8.3.3" />
+    <PackageReference Include="GraphQL.Server.Ui.Playground" Version="8.3.3" />
+    <PackageReference Include="GraphQL.Server.Ui.Voyager" Version="8.3.3" />
+    <PackageReference Include="GraphQL.SystemTextJson" Version="8.8.3" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.22" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\DataLayer\Database\Connection\ACS.Database.Connection\ACS.Database.Connection.csproj" />
+    <ProjectReference Include="..\..\..\DataLayer\Database\Connection\ACS.Database.IConnection\ACS.Database.IConnection.csproj" />
+    <ProjectReference Include="..\..\..\DataLayer\Database\DataAccess\ACS.Database.DataAccess\ACS.Database.DataAccess.csproj" />
+    <ProjectReference Include="..\..\..\DataLayer\Database\DataAccess\ACS.Database.IDataAccess\ACS.Database.IDataAccess.csproj" />
+    <ProjectReference Include="..\..\..\DataLayer\Database\Query\ACS.Database.IQuery\ACS.Database.IQuery.csproj" />
+    <ProjectReference Include="..\..\..\DataLayer\Database\Query\ACS.Database.Query\ACS.Database.Query.csproj" />
+    <ProjectReference Include="..\..\ACS.Background\ACS.Background.csproj" />
+    <ProjectReference Include="..\..\ACS.Cache.Service\ACS.Cache.Service.csproj" />
+    <ProjectReference Include="..\..\ACS.Handler\ACS.Handler.csproj" />
+    <ProjectReference Include="..\..\ACS.HealthChecks\ACS.HealthChecks.csproj" />
+    <ProjectReference Include="..\..\ACS.Middleware\ACS.Middleware.csproj" />
+    <ProjectReference Include="..\..\ACS.Swagger\ACS.Swagger.csproj" />
+  </ItemGroup>
+
+</Project>

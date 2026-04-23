@@ -1,0 +1,6 @@
+@ACS.Webhook.WebService_HostAddress = http://localhost:5139
+
+GET {{ACS.Webhook.WebService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

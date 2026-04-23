@@ -1,0 +1,6 @@
+@ACS.Master.WebService_HostAddress = http://localhost:5188
+
+GET {{ACS.Master.WebService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,6 @@
+@ACS.Notifications.WebService_HostAddress = http://localhost:5055
+
+GET {{ACS.Notifications.WebService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

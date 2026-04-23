@@ -1,0 +1,6 @@
+@SCS.Authentication.WebService_HostAddress = http://localhost:5213
+
+GET {{SCS.Authentication.WebService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

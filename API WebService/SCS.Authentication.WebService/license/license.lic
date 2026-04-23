@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<License>
+  <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+      <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256" />
+      <ds:Reference URI="">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+        <ds:DigestValue>bWp7zIfxYARXmCH5HoZOIXHy62Af9UmGxdR4uZxgyaE=</ds:DigestValue>
+      </ds:Reference>
+      <ds:Reference URI="#SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
+        <ds:Transforms>
+          <ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+        </ds:Transforms>
+        <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+        <ds:DigestValue>MTAyYTkwNDFmMzk4NjdiOTgzMjViOGY2Y2ZmOTg0NjI5MWMzMWM2MzI5NjJlYjU4MjZhOGU4YjVmM2E4NzNiZA==</ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>MEUCIQDkS5q8nwqgMZCqM0lhlXgyL3WuArQ9Snm08H78qzDbqgIgWqUFONpYwyvs84Ab2VDjP8NJv760IYSJAcg6+5xL9gQ=</ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509Certificate>MIIDJzCCAs6gAwIBAgIRAPUqNT3SKyJ12EaAd9BHNVswCgYIKoZIzj0EAwIwfDEL
+MAkGA1UEBhMCU0ExHDAaBgNVBAMME21hd2dpZi1saWNlbnNlLXByb2QxKzApBgNV
+BAoMIk1hd2dpZiBTbWFydCBQYXJraW5nIFNvbHV0aW9ucyBMTEMxIjAgBgNVBAsM
+GVJpeWFkaCBQYXJraW5nIE9wZXJhdGlvbnMwHhcNMjYwMzI4MDg1MDM3WhcNMjcw
+MzI5MDg1MDM3WjB8MQswCQYDVQQGEwJTQTEcMBoGA1UEAwwTbWF3Z2lmLWxpY2Vu
+c2UtcHJvZDErMCkGA1UECgwiTWF3Z2lmIFNtYXJ0IFBhcmtpbmcgU29sdXRpb25z
+IExMQzEiMCAGA1UECwwZUml5YWRoIFBhcmtpbmcgT3BlcmF0aW9uczBWMBAGByqG
+SM49AgEGBSuBBAAKA0IABJDB9aOa3oCQ3YAX0EfwIzpWfcNgbYxgSTWE6+HHwjSf
+EsJxxtn69tuSqRPKNbxckDiyHENU51fpqHCCabLTjf6jggEyMIIBLjAcBgkrBgEE
+AYI3FAIEDwQNBAsMCVRFTVBMQVRFMTCB0AYDVR0RBIHIBIHFMIHCpIG/MIG8MRsw
+GQYDVQQMDBJQcm9kdWN0aW9uIExpY2Vuc2UxKzApBgNVBAQMIjEtU09MVVRJT04x
+fDItTU9ERUwxfDMtU0VSSUFMMTIzNDUxJDAiBgoJkiaJk/IsZAEBDBRXUy05RjND
+LTIwMjUtUllELTAwMTElMCMGA1UEDwwcU21hcnQgUGFya2luZyAmIEFOUFIgU3lz
+dGVtczEjMCEGA1UEBwwaNzQyMSBLaW5nIEZhaGQgUm9hZCBSaXlhZGgwDAYDVR0T
+AQH/BAIwADAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0OBBYEFIDwDpl8Bqd83JOP4fre
+f4XOYBahMAoGCCqGSM49BAMCA0cAMEQCIAQJ8q5roMYEO/Ox6z7btj3b5zivCwO4
+WnMKOIE0eKUpAiBlv7u1gmv2DlyJPZ+uCOarDlg/fdQdM6uYjr3CTihmZA==</ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+    <ds:Object>
+      <xades:QualifyingProperties Target="signature" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#">
+        <xades:SignedProperties Id="SignedProperties" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#">
+          <xades:SignedSignatureProperties>
+            <xades:SigningTime>2026-03-29T08:50:37Z</xades:SigningTime>
+            <xades:SigningCertificate>
+              <xades:Cert>
+                <xades:CertDigest>
+                  <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" />
+                  <ds:DigestValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">YzRhYjAxNjZjMDc3ZWRjYWM0MDc3OTBjNDc4NmUzZjExOGE4MjVlNDQxMTQxZjlmMGQ0OGI1N2E4NGUwMGNkMQ==</ds:DigestValue>
+                </xades:CertDigest>
+                <xades:IssuerSerial>
+                  <ds:X509IssuerName xmlns:ds="http://www.w3.org/2000/09/xmldsig#">OU=Riyadh Parking Operations, O=Mawgif Smart Parking Solutions LLC, CN=mawgif-license-prod, C=SA</ds:X509IssuerName>
+                  <ds:X509SerialNumber xmlns:ds="http://www.w3.org/2000/09/xmldsig#">31036517354868005316193917912473137771776</ds:X509SerialNumber>
+                </xades:IssuerSerial>
+              </xades:Cert>
+            </xades:SigningCertificate>
+          </xades:SignedSignatureProperties>
+        </xades:SignedProperties>
+      </xades:QualifyingProperties>
+    </ds:Object>
+  </ds:Signature>
+  <ID>WS-9F3C-2025-RYD-001</ID>
+  <CompanyName>My Company</CompanyName>
+  <SoftwareName>My Software</SoftwareName>
+  <MachineID>MACHINE12345</MachineID>
+  <System>
+    <IssuedDate>2026-03-29</IssuedDate>
+    <IssuedTime>08:50:37</IssuedTime>
+    <ExpiryDate>2027-03-29</ExpiryDate>
+    <ExpiryTime>08:50:37</ExpiryTime>
+  </System>
+  <DB>
+    <Host>
+      <Value>H0+FEgYPGoJ+RvG5cPllbA==</Value>
+      <Key>/bG0r02PVtbcB7yOLF3W34f6KaMIwOXyKMEnQ/7mqUg=</Key>
+      <IV>oSXSTJvHnrBnliFkYSnEEg==</IV>
+    </Host>
+    <DBName>
+      <Value>q0b5qY0kXBZ78O02rQMhJw==</Value>
+      <Key>JkCJYr1JhwijYbNkeCWRpbosGv4AA4K2bOyeblI8cpU=</Key>
+      <IV>nERcXVPwQwCCmUjpXYP5ww==</IV>
+    </DBName>
+    <Username>
+      <Value>k0vm+6fsn6m3ULimg82MDw==</Value>
+      <Key>tK7Nom5AXZfG0GcGdjxn038SXiEnTLmcjgpRkqI0gts=</Key>
+      <IV>Y/Ycv5F99FEe3Uiqqwpd1A==</IV>
+    </Username>
+    <DBPassword>
+      <Value>HDhf4LvJ3ACX+oE1iB1Gvg==</Value>
+      <Key>8cXoJ3lZw5mt80e+3p+IPhv0uME4hrg+5Smx7MgDOJw=</Key>
+      <IV>x9ssxLe/8rsJ0bUSHfyLww==</IV>
+    </DBPassword>
+    <Provider>
+      <Value>inSuypV77REdA//ncKFzjw==</Value>
+      <Key>vJ+TsBs1JY6FaCrIFLJJZDFhqPiIQRrq98d6LDGyvAM=</Key>
+      <IV>jvW3M1tdIX5I1WYQFy+30Q==</IV>
+    </Provider>
+    <PortNumber>
+      <Value>h3CqE3zurhHKBYI9hOyyEQ==</Value>
+      <Key>iy56qkSUpqG4JKXJKSir6dlW+25ttfHvyEtkWT90PgU=</Key>
+      <IV>KqYpvh7IZnKC8YvqXPMSnA==</IV>
+    </PortNumber>
+  </DB>
+  <Cache>
+    <Host>
+      <Value>ySt9r79HhOjzVTlwSveewuggDpcI0Noo9K/qb8BVtDk=</Value>
+      <Key>nSRm7jpMh9qMxXLfIdjJ6aV7ha9LqCQkjCSKpvxGC4M=</Key>
+      <IV>SMeli1nXJXSJwbDCJ6yrKw==</IV>
+    </Host>
+    <PortNumber>
+      <Value>O+wfWyqvLOBC8/hUy5rXEQ==</Value>
+      <Key>FHE/B6cSoCU2lQ1zKmO6S5p/MZud0QvzJl7ssv7IgkA=</Key>
+      <IV>Que+Cfyia/Of0VUzLBSkOQ==</IV>
+    </PortNumber>
+  </Cache>
+  <Minio>
+    <Endpoint>
+      <Value>oz0IW0AV8PUOIOiMWFiEj+H/BaxuXQE/PvRPAZPPuKA=</Value>
+      <Key>d25Ahcle+DjplfBlOO9bo4W8nb2e/m+cYqojd25BzE0=</Key>
+      <IV>LeJfh/z2nkS0QC44x9XBeQ==</IV>
+    </Endpoint>
+    <AccessKey>
+      <Value>Dakjuyzhcyi3q0So8qxe5g==</Value>
+      <Key>jPk5XEcMKAxuAi1UYyJBN6S6tMa9QUW3pwXhEPktFmw=</Key>
+      <IV>gfW6+woXdSV5wKU460yrvw==</IV>
+    </AccessKey>
+    <SecretKey>
+      <Value>iYjHqXK64egMLWRLbwceug==</Value>
+      <Key>Cht6ue6okTMUIOG/ySAjS9ZvkHXviRUagYumQN2pAXk=</Key>
+      <IV>l7jqiBn/+pokXQNrKi40CA==</IV>
+    </SecretKey>
+    <Bucket>
+      <Value>q/rgsaypyqOXKMR4UtifHQ==</Value>
+      <Key>2ffj0OvkXlpkiaZbSfsEUrPAoZ4swr1ZVfnAFW6mvdg=</Key>
+      <IV>kYCMZLu+raCXmWx8Y2xlIg==</IV>
+    </Bucket>
+  </Minio>
+  <TermsAndConditions><![CDATA[
+                            SOFTWARE LICENSE AGREEMENT
+                            
+                            1. GRANT OF LICENSE
+                            This license grants you the right to install and use this software 
+                            on one machine only.
+                            
+                            2. RESTRICTIONS
+                            - You may not reverse engineer, decompile, or disassemble the software.
+                            - You may not redistribute, sublicense, or transfer the license.
+                            - The software is licensed per machine basis.
+                            
+                            3. TERM
+                            This license is valid until the expiry date specified above.
+                            
+                            4. TERMINATION
+                            This license terminates automatically if you violate any terms.
+                            
+                            By using this software, you agree to these terms.
+                        ]]></TermsAndConditions>
+</License>

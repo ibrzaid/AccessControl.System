@@ -1,0 +1,6 @@
+@ACS.Monitoring.WebService_HostAddress = http://localhost:5015
+
+GET {{ACS.Monitoring.WebService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

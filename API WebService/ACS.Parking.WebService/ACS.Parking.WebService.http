@@ -1,0 +1,6 @@
+@ACS.Parking.WebService_HostAddress = http://localhost:5225
+
+GET {{ACS.Parking.WebService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
