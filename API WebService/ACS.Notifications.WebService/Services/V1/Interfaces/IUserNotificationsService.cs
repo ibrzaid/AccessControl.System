@@ -35,5 +35,16 @@ namespace ACS.Notifications.WebService.Services.V1.Interfaces
             string? ip, string? userAgent, string? deviceInfo, string requestId,
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Run the housekeeping function fun_daily_maintenance.
+        /// Returns the raw JSON payload from the database as a string so the
+        /// hosted service can log structured details without dragging the
+        /// BusinessEntities project into the WebService surface.
+        /// Never throws — failures are returned as <c>(false, errorMessage)</c>.
+        /// </summary>
+        Task<(bool Success, string Detail)> RunDailyMaintenanceAsync(
+            int readRetentionDays, int unreadRetentionDays,
+            CancellationToken cancellationToken = default);
     }
 }

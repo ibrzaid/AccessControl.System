@@ -7,6 +7,7 @@ using ACS.HealthChecks;
 using ACS.Helper;
 using ACS.Helper.V1;
 using ACS.Middleware;
+using ACS.Notifications.WebService.HostedServices;
 using ACS.Notifications.WebService.Middleware;
 using ACS.Notifications.WebService.Notification;
 using ACS.Notifications.WebService.Services.V1.Interfaces;
@@ -272,6 +273,7 @@ builder.Services.AddSingleton<IUserNotificationsService, UserNotificationsServic
 
 
 builder.Services.AddHostedService<BackgroundTaskService>();
+builder.Services.AddHostedService<DailyMaintenanceHostedService>();
 
 builder.Services.Configure<KestrelServerOptions>(options =>
 {

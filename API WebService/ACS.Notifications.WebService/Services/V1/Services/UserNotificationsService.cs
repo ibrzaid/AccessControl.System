@@ -314,5 +314,58 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                     false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name, null, null);
             }
         }
+
+        /// <summary>
+        /// Hosted-service entrypoint. Resolves the License → DB connection,
+        /// dispatches to the postgres data access, and never throws.
+        /// On exception the failure is logged here AND returned so the host can
+        /// log a structured warning with the same correlation context.
+        /// </summary>
+        public async Task<(bool Success, string Detail)> RunDailyMaintenanceAsync(
+            int readRetentionDays, int unreadRetentionDays,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var license = this.LicenseManager.GetLicense();
+                if (license?.DB is null)
+                {
+                    logger.LogWarning("Daily maintenance skipped: no DB connection in license");
+                    return (false, "No DB connection configured in license");
+                }
+
+                var entity = await this[license.DB].RunDailyMaintenanceAsync(
+                    readRetentionDays, unreadRetentionDays, cancellationToken);
+
+                if (!entity.Success)
+                {
+                    logger.LogWarning(
+                        "Daily maintenance reported failure: {message} ({code}) — purged read={read} expired={exp} unread={unread}",
+                        entity.Message, entity.ErrorCode,
+                        entity.ReadPurgedCount, entity.ExpiredPurgedCount, entity.UnreadPurgedCount);
+                }
+                else
+                {
+                    logger.LogInformation(
+                        "Daily maintenance OK in {elapsed}ms: read={read} expired={exp} unread={unread} total={total}",
+                        entity.ElapsedMs, entity.ReadPurgedCount, entity.ExpiredPurgedCount,
+                        entity.UnreadPurgedCount, entity.TotalPurgedCount);
+                }
+
+                var detail = $"read={entity.ReadPurgedCount ?? 0} expired={entity.ExpiredPurgedCount ?? 0} "
+                           + $"unread={entity.UnreadPurgedCount ?? 0} total={entity.TotalPurgedCount ?? 0} "
+                           + $"elapsed_ms={entity.ElapsedMs ?? 0}";
+                return (entity.Success, detail);
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // host shutdown — propagate so the BackgroundService loop exits cleanly
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "RunDailyMaintenanceAsync threw");
+                return (false, ex.GetType().Name + ": " + ex.Message);
+            }
+        }
     }
 }
