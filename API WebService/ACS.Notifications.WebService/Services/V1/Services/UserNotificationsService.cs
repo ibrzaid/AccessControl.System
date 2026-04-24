@@ -367,5 +367,141 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 return (false, ex.GetType().Name + ": " + ex.Message);
             }
         }
+
+        // -------------------------------------------------------------------
+        // Phase G: per-user notification preferences (mute lists).
+        // -------------------------------------------------------------------
+        // Server-side hard cap: nobody legitimately needs to mute more than
+        // 64 codes (the active catalogues currently total 6 priorities + 11
+        // types).  This protects the SQL function from pathological input.
+        private const int MaxMuteCodes = 64;
+        // Each code in the catalogue is varchar(20).  Anything longer is
+        // garbage and should be dropped before it ever hits the DB.
+        private const int MaxCodeLength = 20;
+
+        private static UserNotificationPreferencesResponse Mapped(
+            ACS.BusinessEntities.NotificationsService.V1.UserNotifications.UserNotificationPreferencesEntity entity,
+            string requestId)
+        {
+            static NotificationCatalogItem[] MapCatalog(
+                ACS.BusinessEntities.NotificationsService.V1.UserNotifications.NotificationCatalogItemEntity[]? src) =>
+                src?.Select(c => new NotificationCatalogItem(c.Code, c.Labels)).ToArray() ?? [];
+
+            if (!entity.Success)
+            {
+                return new UserNotificationPreferencesResponse(
+                    Success:             false,
+                    Message:             entity.Message ?? "Unable to load notification preferences",
+                    ErrorCode:           entity.ErrorCode ?? "DB_ERROR",
+                    RequestId:           requestId,
+                    Detail:              entity.Detail,
+                    MutedPriorities:     entity.MutedPriorities ?? [],
+                    MutedTypes:          entity.MutedTypes      ?? [],
+                    AvailablePriorities: MapCatalog(entity.AvailablePriorities),
+                    AvailableTypes:      MapCatalog(entity.AvailableTypes));
+            }
+
+            return new UserNotificationPreferencesResponse(
+                Success:             true,
+                Message:             null,
+                ErrorCode:           string.Empty,
+                RequestId:           requestId,
+                Detail:              entity.Detail,
+                MutedPriorities:     entity.MutedPriorities ?? [],
+                MutedTypes:          entity.MutedTypes      ?? [],
+                AvailablePriorities: MapCatalog(entity.AvailablePriorities),
+                AvailableTypes:      MapCatalog(entity.AvailableTypes));
+        }
+
+        public async Task<UserNotificationPreferencesResponse> GetUserNotificationPreferencesAsync(
+            string workspace, string user, string requestId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!int.TryParse(workspace, out var wid) || !int.TryParse(user, out var uid))
+                {
+                    return new UserNotificationPreferencesResponse(
+                        false, "Invalid workspace or user identifier", "INVALID_CLAIMS",
+                        requestId, null, [], [], [], []);
+                }
+
+                var license = this.LicenseManager.GetLicense();
+                var entity = await this[license!.DB!].GetUserNotificationPreferencesAsync(
+                    wid, uid, cancellationToken);
+                return Mapped(entity, requestId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "GetUserNotificationPreferencesAsync failed (req {req})", requestId);
+                return new UserNotificationPreferencesResponse(
+                    false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name,
+                    [], [], [], []);
+            }
+        }
+
+        public async Task<UserNotificationPreferencesResponse> UpdateUserNotificationPreferencesAsync(
+            string workspace, string user,
+            string[] mutedPriorities, string[] mutedTypes,
+            string requestId,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!int.TryParse(workspace, out var wid) || !int.TryParse(user, out var uid))
+                {
+                    return new UserNotificationPreferencesResponse(
+                        false, "Invalid workspace or user identifier", "INVALID_CLAIMS",
+                        requestId, null, [], [], [], []);
+                }
+
+                // Defensive whitelist BEFORE the DB hop: drop nulls/empties,
+                // upper-case (codes are stored upper-case), trim length, and
+                // de-dupe.  The SQL function also filters against the active
+                // catalogue so anything that survives this still gets validated.
+                static string[] Clean(string[]? raw) =>
+                    raw?
+                        .Where(c => !string.IsNullOrWhiteSpace(c))
+                        .Select(c => c!.Trim().ToUpperInvariant())
+                        .Where(c => c.Length is > 0 and <= MaxCodeLength &&
+                                    c.All(ch => char.IsLetterOrDigit(ch) || ch == '_'))
+                        .Distinct()
+                        .Take(MaxMuteCodes)
+                        .ToArray()
+                    ?? Array.Empty<string>();
+
+                var cleanPriorities = Clean(mutedPriorities);
+                var cleanTypes      = Clean(mutedTypes);
+
+                var license = this.LicenseManager.GetLicense();
+                var updated = await this[license!.DB!].UpdateUserNotificationPreferencesAsync(
+                    wid, uid, cleanPriorities, cleanTypes, cancellationToken);
+
+                if (!updated.Success)
+                {
+                    return new UserNotificationPreferencesResponse(
+                        false, updated.Message ?? "Unable to update notification preferences",
+                        updated.ErrorCode ?? "DB_ERROR",
+                        requestId, updated.Detail,
+                        updated.MutedPriorities ?? cleanPriorities,
+                        updated.MutedTypes      ?? cleanTypes,
+                        [], []);
+                }
+
+                // Re-fetch the full state (with available_* catalogues) so the
+                // client always gets a consistent shape.  Cheap: same row
+                // we just wrote, plus 2 small lookups.
+                var entity = await this[license.DB!].GetUserNotificationPreferencesAsync(
+                    wid, uid, cancellationToken);
+                return Mapped(entity, requestId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "UpdateUserNotificationPreferencesAsync failed (req {req})", requestId);
+                return new UserNotificationPreferencesResponse(
+                    false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name,
+                    [], [], [], []);
+            }
+        }
     }
 }

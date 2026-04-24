@@ -46,5 +46,15 @@ namespace ACS.Notifications.WebService.Services.V1.Interfaces
         Task<(bool Success, string Detail)> RunDailyMaintenanceAsync(
             int readRetentionDays, int unreadRetentionDays,
             CancellationToken cancellationToken = default);
+
+        Task<UserNotificationPreferencesResponse> GetUserNotificationPreferencesAsync(
+            string workspace, string user, string requestId,
+            CancellationToken cancellationToken = default);
+
+        Task<UserNotificationPreferencesResponse> UpdateUserNotificationPreferencesAsync(
+            string workspace, string user,
+            string[] mutedPriorities, string[] mutedTypes,
+            string requestId,
+            CancellationToken cancellationToken = default);
     }
 }

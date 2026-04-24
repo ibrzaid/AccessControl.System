@@ -104,5 +104,43 @@ namespace ACS.Models.Response.V1.NotificationsService.UserNotifications
         [property: JsonPropertyName("deleted_ids")]     long[]? DeletedIds,
         [property: JsonPropertyName("unread_count")]    long?   UnreadCount
     ) : BaseResponses(Success, Message, ErrorCode, RequestId);
+
+    /// <summary>
+    /// Catalogue entry for a notification priority or type.  The
+    /// <c>Labels</c> map is keyed by IETF locale (e.g. "en-US", "ar-SA")
+    /// and is rendered directly by the preferences UI.
+    /// </summary>
+    public record NotificationCatalogItem(
+        [property: JsonPropertyName("code")]   string Code,
+        [property: JsonPropertyName("labels")] Dictionary<string, string>? Labels
+    );
+
+    /// <summary>
+    /// Per-user notification preferences (Phase G).  Returned by
+    /// GET /api/notifications/preferences and PUT /api/notifications/preferences.
+    /// The "available_*" arrays carry the full active catalogue so the UI
+    /// can render labels in the current locale without an extra round trip.
+    /// </summary>
+    public record UserNotificationPreferencesResponse(
+        bool Success,
+        string? Message,
+        string ErrorCode,
+        string RequestId,
+        [property: JsonPropertyName("detail")]               string? Detail,
+        [property: JsonPropertyName("muted_priorities")]     string[] MutedPriorities,
+        [property: JsonPropertyName("muted_types")]          string[] MutedTypes,
+        [property: JsonPropertyName("available_priorities")] NotificationCatalogItem[] AvailablePriorities,
+        [property: JsonPropertyName("available_types")]      NotificationCatalogItem[] AvailableTypes
+    ) : BaseResponses(Success, Message, ErrorCode, RequestId);
+
+    /// <summary>
+    /// Request body for PUT /api/notifications/preferences.  Both arrays
+    /// are required (send an empty array to clear all mutes for that
+    /// dimension).  Server caps each array at 64 entries.
+    /// </summary>
+    public record UpdateUserNotificationPreferencesRequest(
+        [property: JsonPropertyName("muted_priorities")] string[]? MutedPriorities,
+        [property: JsonPropertyName("muted_types")]      string[]? MutedTypes
+    );
 }
 #pragma warning restore IDE0130 // Namespace does not match folder structure

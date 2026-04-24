@@ -322,5 +322,102 @@ namespace ACS.Notifications.WebService.Controllers.V1
                 return Problem(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Phase G — read the calling user's notification preferences. The
+        /// response also carries the active priority/type catalogues so the
+        /// preferences UI can render labels in the user's locale without an
+        /// extra round trip.
+        /// </summary>
+        [HttpGet("preferences")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(UserNotificationPreferencesResponse), StatusCodes.Status200OK)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetUserNotificationPreferencesAsync()
+        {
+            try
+            {
+                string requestId = GetRequestId();
+                string workspace = findClaimHelper.FindClaim(HttpContext, "wid");
+
+                if (string.IsNullOrEmpty(workspace) || !int.TryParse(workspace, out _))
+                {
+                    return Unauthorized(new BaseResponses(
+                        Success: false,
+                        Message: "Invalid or missing workspace identifier",
+                        ErrorCode: "INVALID_WORKSPACE",
+                        RequestId: requestId));
+                }
+
+                string user = findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier);
+
+                var response = await service.GetUserNotificationPreferencesAsync(
+                    workspace, user, requestId, HttpContext.RequestAborted);
+
+                if (!response.Success) return StatusCode(500, response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Phase G — replace the calling user's notification mute lists. Send
+        /// an empty array to clear all mutes for that dimension. Returns the
+        /// fresh state (including the catalogues) so the UI can re-render
+        /// without a follow-up GET.
+        /// </summary>
+        [HttpPut("preferences")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(UserNotificationPreferencesResponse), StatusCodes.Status200OK)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> UpdateUserNotificationPreferencesAsync(
+            [FromBody] UpdateUserNotificationPreferencesRequest body)
+        {
+            try
+            {
+                string requestId = GetRequestId();
+                if (body is null)
+                {
+                    return BadRequest(new BaseResponses(
+                        Success: false,
+                        Message: "Request body is required",
+                        ErrorCode: "EMPTY_BODY",
+                        RequestId: requestId));
+                }
+
+                string workspace = findClaimHelper.FindClaim(HttpContext, "wid");
+                if (string.IsNullOrEmpty(workspace) || !int.TryParse(workspace, out _))
+                {
+                    return Unauthorized(new BaseResponses(
+                        Success: false,
+                        Message: "Invalid or missing workspace identifier",
+                        ErrorCode: "INVALID_WORKSPACE",
+                        RequestId: requestId));
+                }
+
+                string user = findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier);
+
+                var response = await service.UpdateUserNotificationPreferencesAsync(
+                    workspace, user,
+                    body.MutedPriorities ?? Array.Empty<string>(),
+                    body.MutedTypes      ?? Array.Empty<string>(),
+                    requestId, HttpContext.RequestAborted);
+
+                if (!response.Success) return StatusCode(500, response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
     }
 }
