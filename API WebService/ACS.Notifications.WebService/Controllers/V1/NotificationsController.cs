@@ -151,6 +151,72 @@ namespace ACS.Notifications.WebService.Controllers.V1
         }
 
         /// <summary>
+        /// Bulk-delete a set of notifications owned by the calling user. The
+        /// SQL function caps the array at 500 ids per call.
+        /// </summary>
+        [HttpPost("bulk-delete")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(BulkDeleteUserNotificationsResponse), StatusCodes.Status200OK)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> BulkDeleteUserNotificationsAsync(
+            [FromBody] BulkDeleteUserNotificationsRequest body,
+            [FromQuery] string? latitude = null,
+            [FromQuery] string? longitude = null)
+        {
+            try
+            {
+                string requestId = GetRequestId();
+                string workspace = findClaimHelper.FindClaim(HttpContext, "wid");
+
+                if (string.IsNullOrEmpty(workspace) || !int.TryParse(workspace, out _))
+                {
+                    return Unauthorized(new BaseResponses(
+                        Success: false,
+                        Message: "Invalid or missing workspace identifier",
+                        ErrorCode: "INVALID_WORKSPACE",
+                        RequestId: requestId));
+                }
+
+                if (body is null || body.Ids is null || body.Ids.Length == 0)
+                {
+                    return BadRequest(new BaseResponses(
+                        Success: false,
+                        Message: "ids array is required",
+                        ErrorCode: "EMPTY_INPUT",
+                        RequestId: requestId));
+                }
+
+                string user = findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier);
+
+                string? ip  = HttpContext.Connection.RemoteIpAddress?.ToString();
+                string? ua  = Request.Headers.UserAgent.ToString();
+                string? di  = Request.Headers["X-Device-Info"].ToString();
+                if (string.IsNullOrWhiteSpace(di)) di = null;
+
+                var response = await service.BulkDeleteUserNotificationsAsync(
+                    workspace, user, body.Ids,
+                    ip, ua, di, requestId,
+                    ParseCoord(latitude), ParseCoord(longitude),
+                    HttpContext.RequestAborted);
+
+                if (!response.Success)
+                {
+                    if (response.ErrorCode == "EMPTY_INPUT" || response.ErrorCode == "BATCH_TOO_LARGE")
+                        return BadRequest(response);
+                    return StatusCode(500, response);
+                }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
+
+        /// <summary>
         /// Mark one notification owned by the calling user as read. Idempotent
         /// (a no-op if it was already read). Emits a SignalR event so other
         /// open tabs/devices for the same user reconcile their unread badge.

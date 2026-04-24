@@ -166,6 +166,62 @@ namespace ACS.Notifications.WebService.Services.V1.Services
             }
         }
 
+        public async Task<BulkDeleteUserNotificationsResponse> BulkDeleteUserNotificationsAsync(
+            string workspace, string user, long[] notificationIds,
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!int.TryParse(workspace, out var wid) || !int.TryParse(user, out var uid))
+                {
+                    return new BulkDeleteUserNotificationsResponse(
+                        false, "Invalid workspace or user identifier", "INVALID_CLAIMS",
+                        requestId, null, null, null, null, null);
+                }
+
+                if (notificationIds is null || notificationIds.Length == 0)
+                {
+                    return new BulkDeleteUserNotificationsResponse(
+                        false, "No notification ids supplied", "EMPTY_INPUT",
+                        requestId, "EMPTY_INPUT", 0, 0, Array.Empty<long>(), null);
+                }
+
+                var license = this.LicenseManager.GetLicense();
+                var entity = await this[license!.DB!].BulkDeleteUserNotificationsAsync(
+                    wid, uid, notificationIds,
+                    ip, userAgent, deviceInfo, requestId,
+                    reqLatitude, reqLongitude, cancellationToken);
+
+                if (!entity.Success)
+                {
+                    return new BulkDeleteUserNotificationsResponse(
+                        false, entity.Message ?? "Unable to bulk-delete notifications",
+                        entity.ErrorCode ?? "DB_ERROR", requestId, entity.Detail,
+                        entity.DeletedCount, entity.RequestedCount, entity.DeletedIds, entity.UnreadCount);
+                }
+
+                return new BulkDeleteUserNotificationsResponse(
+                    Success:        true,
+                    Message:        null,
+                    ErrorCode:      string.Empty,
+                    RequestId:      requestId,
+                    Detail:         null,
+                    DeletedCount:   entity.DeletedCount,
+                    RequestedCount: entity.RequestedCount,
+                    DeletedIds:     entity.DeletedIds,
+                    UnreadCount:    entity.UnreadCount);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "BulkDeleteUserNotificationsAsync failed (req {req}, count {count})",
+                    requestId, notificationIds?.Length ?? 0);
+                return new BulkDeleteUserNotificationsResponse(
+                    false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name, null, null, null, null);
+            }
+        }
+
         public async Task<MarkUserNotificationReadResponse> MarkUserNotificationReadAsync(
             string workspace, string user, long notificationId,
             string? ip, string? userAgent, string? deviceInfo, string requestId,

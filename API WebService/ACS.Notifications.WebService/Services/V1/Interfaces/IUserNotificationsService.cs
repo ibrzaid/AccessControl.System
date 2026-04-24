@@ -18,6 +18,12 @@ namespace ACS.Notifications.WebService.Services.V1.Interfaces
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default);
 
+        Task<BulkDeleteUserNotificationsResponse> BulkDeleteUserNotificationsAsync(
+            string workspace, string user, long[] notificationIds,
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default);
+
         Task<MarkUserNotificationReadResponse> MarkUserNotificationReadAsync(
             string workspace, string user, long notificationId,
             string? ip, string? userAgent, string? deviceInfo, string requestId,

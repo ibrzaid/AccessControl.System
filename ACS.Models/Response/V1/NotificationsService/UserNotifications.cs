@@ -80,5 +80,29 @@ namespace ACS.Models.Response.V1.NotificationsService.UserNotifications
         [property: JsonPropertyName("marked_count")] long? MarkedCount,
         [property: JsonPropertyName("unread_count")] long? UnreadCount
     ) : BaseResponses(Success, Message, ErrorCode, RequestId);
+
+    /// <summary>
+    /// Request body for the bulk-delete endpoint. The server caps the array at
+    /// 500 ids per call (enforced inside the SQL function).
+    /// </summary>
+    public record BulkDeleteUserNotificationsRequest(
+        [property: JsonPropertyName("ids")] long[] Ids
+    );
+
+    /// <summary>
+    /// Result of bulk-deleting a set of notifications owned by the calling user.
+    /// Backed by `notifications_tbls_sch_v1.fun_bulk_delete_user_notifications`.
+    /// </summary>
+    public record BulkDeleteUserNotificationsResponse(
+        bool Success,
+        string? Message,
+        string ErrorCode,
+        string RequestId,
+        [property: JsonPropertyName("detail")]          string? Detail,
+        [property: JsonPropertyName("deleted_count")]   int?    DeletedCount,
+        [property: JsonPropertyName("requested_count")] int?    RequestedCount,
+        [property: JsonPropertyName("deleted_ids")]     long[]? DeletedIds,
+        [property: JsonPropertyName("unread_count")]    long?   UnreadCount
+    ) : BaseResponses(Success, Message, ErrorCode, RequestId);
 }
 #pragma warning restore IDE0130 // Namespace does not match folder structure
