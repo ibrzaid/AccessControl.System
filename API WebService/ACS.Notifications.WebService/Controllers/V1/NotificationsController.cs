@@ -143,5 +143,112 @@ namespace ACS.Notifications.WebService.Controllers.V1
                 return Problem(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Mark one notification owned by the calling user as read. Idempotent
+        /// (a no-op if it was already read). Emits a SignalR event so other
+        /// open tabs/devices for the same user reconcile their unread badge.
+        /// </summary>
+        [HttpPatch("{id:long}/read")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(MarkUserNotificationReadResponse), StatusCodes.Status200OK)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> MarkUserNotificationReadAsync(
+            [FromRoute] long id,
+            [FromQuery] string? latitude = null,
+            [FromQuery] string? longitude = null)
+        {
+            try
+            {
+                string requestId = GetRequestId();
+                string workspace = findClaimHelper.FindClaim(HttpContext, "wid");
+
+                if (string.IsNullOrEmpty(workspace) || !int.TryParse(workspace, out _))
+                {
+                    return Unauthorized(new BaseResponses(
+                        Success: false,
+                        Message: "Invalid or missing workspace identifier",
+                        ErrorCode: "INVALID_WORKSPACE",
+                        RequestId: requestId));
+                }
+
+                string user = findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier);
+
+                string? ip  = HttpContext.Connection.RemoteIpAddress?.ToString();
+                string? ua  = Request.Headers.UserAgent.ToString();
+                string? di  = Request.Headers["X-Device-Info"].ToString();
+                if (string.IsNullOrWhiteSpace(di)) di = null;
+
+                var response = await service.MarkUserNotificationReadAsync(
+                    workspace, user, id,
+                    ip, ua, di, requestId,
+                    ParseCoord(latitude), ParseCoord(longitude),
+                    HttpContext.RequestAborted);
+
+                if (!response.Success)
+                {
+                    if (response.ErrorCode == "NOT_FOUND") return NotFound(response);
+                    return StatusCode(500, response);
+                }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Mark every unread notification belonging to the calling user as
+        /// read in a single round-trip.
+        /// </summary>
+        [HttpPost("read-all")]
+        [MapToApiVersion("1.0")]
+        [ProducesResponseType(typeof(BaseResponses), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(MarkAllUserNotificationsReadResponse), StatusCodes.Status200OK)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> MarkAllUserNotificationsReadAsync(
+            [FromQuery] string? latitude = null,
+            [FromQuery] string? longitude = null)
+        {
+            try
+            {
+                string requestId = GetRequestId();
+                string workspace = findClaimHelper.FindClaim(HttpContext, "wid");
+
+                if (string.IsNullOrEmpty(workspace) || !int.TryParse(workspace, out _))
+                {
+                    return Unauthorized(new BaseResponses(
+                        Success: false,
+                        Message: "Invalid or missing workspace identifier",
+                        ErrorCode: "INVALID_WORKSPACE",
+                        RequestId: requestId));
+                }
+
+                string user = findClaimHelper.FindClaim(HttpContext, ClaimTypes.NameIdentifier);
+
+                string? ip  = HttpContext.Connection.RemoteIpAddress?.ToString();
+                string? ua  = Request.Headers.UserAgent.ToString();
+                string? di  = Request.Headers["X-Device-Info"].ToString();
+                if (string.IsNullOrWhiteSpace(di)) di = null;
+
+                var response = await service.MarkAllUserNotificationsReadAsync(
+                    workspace, user,
+                    ip, ua, di, requestId,
+                    ParseCoord(latitude), ParseCoord(longitude),
+                    HttpContext.RequestAborted);
+
+                if (!response.Success) return StatusCode(500, response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return Problem(ex.Message);
+            }
+        }
     }
 }

@@ -129,5 +129,98 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                     false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name, null, null);
             }
         }
+
+        public async Task<MarkUserNotificationReadResponse> MarkUserNotificationReadAsync(
+            string workspace, string user, long notificationId,
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!int.TryParse(workspace, out var wid) || !int.TryParse(user, out var uid))
+                {
+                    return new MarkUserNotificationReadResponse(
+                        false, "Invalid workspace or user identifier", "INVALID_CLAIMS",
+                        requestId, null, null, null, null);
+                }
+
+                var license = this.LicenseManager.GetLicense();
+                var entity = await this[license!.DB!].MarkUserNotificationReadAsync(
+                    wid, uid, notificationId,
+                    ip, userAgent, deviceInfo, requestId,
+                    reqLatitude, reqLongitude, cancellationToken);
+
+                if (!entity.Success)
+                {
+                    var errorCode = entity.Detail == "NOT_FOUND" ? "NOT_FOUND"
+                                  : (entity.ErrorCode ?? "DB_ERROR");
+                    return new MarkUserNotificationReadResponse(
+                        false, entity.Message ?? "Unable to mark notification as read",
+                        errorCode, requestId, entity.Detail, null, null, null);
+                }
+
+                return new MarkUserNotificationReadResponse(
+                    Success:        true,
+                    Message:        null,
+                    ErrorCode:      string.Empty,
+                    RequestId:      requestId,
+                    Detail:         null,
+                    NotificationId: entity.NotificationId,
+                    WasUnread:      entity.WasUnread,
+                    UnreadCount:    entity.UnreadCount);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "MarkUserNotificationReadAsync failed (req {req}, id {id})", requestId, notificationId);
+                return new MarkUserNotificationReadResponse(
+                    false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name, null, null, null);
+            }
+        }
+
+        public async Task<MarkAllUserNotificationsReadResponse> MarkAllUserNotificationsReadAsync(
+            string workspace, string user,
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (!int.TryParse(workspace, out var wid) || !int.TryParse(user, out var uid))
+                {
+                    return new MarkAllUserNotificationsReadResponse(
+                        false, "Invalid workspace or user identifier", "INVALID_CLAIMS",
+                        requestId, null, null, null);
+                }
+
+                var license = this.LicenseManager.GetLicense();
+                var entity = await this[license!.DB!].MarkAllUserNotificationsReadAsync(
+                    wid, uid,
+                    ip, userAgent, deviceInfo, requestId,
+                    reqLatitude, reqLongitude, cancellationToken);
+
+                if (!entity.Success)
+                {
+                    return new MarkAllUserNotificationsReadResponse(
+                        false, entity.Message ?? "Unable to mark all notifications as read",
+                        entity.ErrorCode ?? "DB_ERROR", requestId, entity.Detail, null, null);
+                }
+
+                return new MarkAllUserNotificationsReadResponse(
+                    Success:     true,
+                    Message:     null,
+                    ErrorCode:   string.Empty,
+                    RequestId:   requestId,
+                    Detail:      null,
+                    MarkedCount: entity.MarkedCount,
+                    UnreadCount: entity.UnreadCount);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "MarkAllUserNotificationsReadAsync failed (req {req})", requestId);
+                return new MarkAllUserNotificationsReadResponse(
+                    false, ex.Message, "EXCEPTION", requestId, ex.GetType().Name, null, null);
+            }
+        }
     }
 }

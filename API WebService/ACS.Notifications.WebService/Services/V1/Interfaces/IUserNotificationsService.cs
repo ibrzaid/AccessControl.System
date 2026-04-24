@@ -15,5 +15,17 @@ namespace ACS.Notifications.WebService.Services.V1.Interfaces
             string? ip, string? userAgent, string? deviceInfo, string requestId,
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default);
+
+        Task<MarkUserNotificationReadResponse> MarkUserNotificationReadAsync(
+            string workspace, string user, long notificationId,
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default);
+
+        Task<MarkAllUserNotificationsReadResponse> MarkAllUserNotificationsReadAsync(
+            string workspace, string user,
+            string? ip, string? userAgent, string? deviceInfo, string requestId,
+            decimal reqLatitude, decimal reqLongitude,
+            CancellationToken cancellationToken = default);
     }
 }

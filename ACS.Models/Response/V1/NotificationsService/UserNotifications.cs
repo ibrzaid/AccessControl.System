@@ -50,5 +50,34 @@ namespace ACS.Models.Response.V1.NotificationsService.UserNotifications
         [property: JsonPropertyName("deleted_id")] long? DeletedId,
         [property: JsonPropertyName("unread_count")] long? UnreadCount
     ) : BaseResponses(Success, Message, ErrorCode, RequestId);
+
+    /// <summary>
+    /// Result of marking a single notification as read.
+    /// Backed by `notifications_tbls_sch_v1.fun_mark_user_notification_read`.
+    /// </summary>
+    public record MarkUserNotificationReadResponse(
+        bool Success,
+        string? Message,
+        string ErrorCode,
+        string RequestId,
+        [property: JsonPropertyName("detail")] string? Detail,
+        [property: JsonPropertyName("notification_id")] long? NotificationId,
+        [property: JsonPropertyName("was_unread")] bool? WasUnread,
+        [property: JsonPropertyName("unread_count")] long? UnreadCount
+    ) : BaseResponses(Success, Message, ErrorCode, RequestId);
+
+    /// <summary>
+    /// Result of bulk mark-all-as-read.
+    /// Backed by `notifications_tbls_sch_v1.fun_mark_all_user_notifications_read`.
+    /// </summary>
+    public record MarkAllUserNotificationsReadResponse(
+        bool Success,
+        string? Message,
+        string ErrorCode,
+        string RequestId,
+        [property: JsonPropertyName("detail")] string? Detail,
+        [property: JsonPropertyName("marked_count")] long? MarkedCount,
+        [property: JsonPropertyName("unread_count")] long? UnreadCount
+    ) : BaseResponses(Success, Message, ErrorCode, RequestId);
 }
 #pragma warning restore IDE0130 // Namespace does not match folder structure
