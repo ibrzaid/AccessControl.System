@@ -47,6 +47,10 @@ namespace ACS.Notifications.WebService.Controllers.V1
             [FromQuery] int offset = 0,
             [FromQuery] string filterStatus = "all",
             [FromQuery] string? search = null,
+            [FromQuery] string? priority = null,
+            [FromQuery] string? type = null,
+            [FromQuery] string? since = null,
+            [FromQuery] string? until = null,
             [FromQuery] string? latitude = null,
             [FromQuery] string? longitude = null)
         {
@@ -77,6 +81,7 @@ namespace ACS.Notifications.WebService.Controllers.V1
 
                 var response = await service.GetUserNotificationsAsync(
                     workspace, user, limit, offset, filterStatus, search,
+                    priority, type, since, until,
                     ip, ua, di, requestId,
                     ParseCoord(latitude), ParseCoord(longitude),
                     HttpContext.RequestAborted);

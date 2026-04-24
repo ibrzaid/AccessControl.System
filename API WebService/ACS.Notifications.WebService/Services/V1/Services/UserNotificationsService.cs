@@ -20,6 +20,7 @@ namespace ACS.Notifications.WebService.Services.V1.Services
         public async Task<UserNotificationsListResponse> GetUserNotificationsAsync(
             string workspace, string user, int limit, int offset, string filterStatus,
             string? search,
+            string? priority, string? type, string? since, string? until,
             string? ip, string? userAgent, string? deviceInfo, string requestId,
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default)
@@ -45,9 +46,35 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 var searchTerm = string.IsNullOrWhiteSpace(search) ? null
                     : (search!.Length > 200 ? search[..200] : search.Trim());
 
+                // Whitelist priority/type code lists so we never forward
+                // arbitrary client text into the SQL filter. Empty / missing
+                // values pass through as null so the SQL skips the filter.
+                static string? CleanCsv(string? raw, int maxItems = 16)
+                {
+                    if (string.IsNullOrWhiteSpace(raw)) return null;
+                    var parts = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                   .Where(p => p.Length is > 0 and <= 32 &&
+                                               p.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-'))
+                                   .Select(p => p.ToUpperInvariant())
+                                   .Distinct()
+                                   .Take(maxItems)
+                                   .ToArray();
+                    return parts.Length == 0 ? null : string.Join(',', parts);
+                }
+                var priorityClean = CleanCsv(priority);
+                var typeClean     = CleanCsv(type);
+
+                // Pass-through ISO-8601 timestamps; SQL casts text → timestamptz.
+                static string? CleanIso(string? raw) =>
+                    string.IsNullOrWhiteSpace(raw) ? null
+                  : (raw!.Length > 64 ? raw[..64] : raw.Trim());
+                var sinceClean = CleanIso(since);
+                var untilClean = CleanIso(until);
+
                 var license = this.LicenseManager.GetLicense();
                 var entity = await this[license!.DB!].GetUserNotificationsAsync(
                     wid, uid, limit, offset, normalised, searchTerm,
+                    priorityClean, typeClean, sinceClean, untilClean,
                     ip, userAgent, deviceInfo, requestId,
                     reqLatitude, reqLongitude, cancellationToken);
 
@@ -61,6 +88,7 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                     RelatedEntityType: n.RelatedEntityType,
                     RelatedEntityId:   n.RelatedEntityId,
                     Priority:          n.Priority,
+                    Type:              n.Type,
                     CreatedAt:         n.CreatedAt,
                     ReadAt:            n.ReadAt
                 )).ToArray() ?? [];

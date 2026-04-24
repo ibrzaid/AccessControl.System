@@ -33,6 +33,7 @@ namespace ACS.Models.Response.V1.NotificationsService.UserNotifications
         [property: JsonPropertyName("related_entity_type")] string? RelatedEntityType,
         [property: JsonPropertyName("related_entity_id")] long? RelatedEntityId,
         [property: JsonPropertyName("priority")] string? Priority,
+        [property: JsonPropertyName("type")] string? Type,
         [property: JsonPropertyName("created_at")] DateTime CreatedAt,
         [property: JsonPropertyName("read_at")] DateTime? ReadAt
     );
