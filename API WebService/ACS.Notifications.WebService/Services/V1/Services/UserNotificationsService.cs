@@ -19,6 +19,7 @@ namespace ACS.Notifications.WebService.Services.V1.Services
 
         public async Task<UserNotificationsListResponse> GetUserNotificationsAsync(
             string workspace, string user, int limit, int offset, string filterStatus,
+            string? search,
             string? ip, string? userAgent, string? deviceInfo, string requestId,
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default)
@@ -39,9 +40,14 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                 if (normalised != "all" && normalised != "read" && normalised != "unread")
                     normalised = "all";
 
+                // Trim and bound the search to keep query plans well-behaved
+                // and align with the SQL function's own 200-char cap.
+                var searchTerm = string.IsNullOrWhiteSpace(search) ? null
+                    : (search!.Length > 200 ? search[..200] : search.Trim());
+
                 var license = this.LicenseManager.GetLicense();
                 var entity = await this[license!.DB!].GetUserNotificationsAsync(
-                    wid, uid, limit, offset, normalised,
+                    wid, uid, limit, offset, normalised, searchTerm,
                     ip, userAgent, deviceInfo, requestId,
                     reqLatitude, reqLongitude, cancellationToken);
 
@@ -82,6 +88,8 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                     null, ex.GetType().Name, null, limit, offset, 0, 0, false, []);
             }
         }
+
+        // search arg unused here intentionally; controller uses the overload above.
 
         public async Task<DeleteUserNotificationResponse> DeleteUserNotificationAsync(
             string workspace, string user, long notificationId,

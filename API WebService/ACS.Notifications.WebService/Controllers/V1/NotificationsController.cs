@@ -46,6 +46,7 @@ namespace ACS.Notifications.WebService.Controllers.V1
             [FromQuery] int limit = 20,
             [FromQuery] int offset = 0,
             [FromQuery] string filterStatus = "all",
+            [FromQuery] string? search = null,
             [FromQuery] string? latitude = null,
             [FromQuery] string? longitude = null)
         {
@@ -75,7 +76,7 @@ namespace ACS.Notifications.WebService.Controllers.V1
                 if (string.IsNullOrWhiteSpace(di)) di = null;
 
                 var response = await service.GetUserNotificationsAsync(
-                    workspace, user, limit, offset, filterStatus,
+                    workspace, user, limit, offset, filterStatus, search,
                     ip, ua, di, requestId,
                     ParseCoord(latitude), ParseCoord(longitude),
                     HttpContext.RequestAborted);
