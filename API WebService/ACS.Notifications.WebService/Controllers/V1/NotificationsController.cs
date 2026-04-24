@@ -18,7 +18,7 @@ namespace ACS.Notifications.WebService.Controllers.V1
     [Route("api/[controller]")]
     [ApiVersion("1.0", Deprecated = true)]
     [ApiExplorerSettings(IgnoreApi = false)]
-    public class NotificationsController(IDashboardService service, FindClaimHelper findClaimHelper) : BaseController
+    public class NotificationsController(IUserNotificationsService service, FindClaimHelper findClaimHelper) : BaseController
     {
         private static decimal ParseCoord(string? raw)
         {

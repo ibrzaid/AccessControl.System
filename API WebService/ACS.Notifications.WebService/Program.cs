@@ -268,6 +268,7 @@ builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
 builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
 builder.Services.AddSingleton<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IDashboardService, DashboardService>();
+builder.Services.AddSingleton<IUserNotificationsService, UserNotificationsService>();
 
 
 builder.Services.AddHostedService<BackgroundTaskService>();
