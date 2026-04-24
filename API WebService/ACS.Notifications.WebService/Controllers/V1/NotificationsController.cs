@@ -28,11 +28,12 @@ namespace ACS.Notifications.WebService.Controllers.V1
 
         /// <summary>
         /// Paginated list of the current user's notifications. Supports a
-        /// load-more flow via `limit` / `offset`, and an `unreadOnly` filter.
+        /// load-more flow via `limit` / `offset`, and a 3-way `filterStatus`
+        /// filter ("all" | "unread" | "read").
         /// </summary>
         /// <param name="limit">Max items to return (1-100, default 20).</param>
         /// <param name="offset">Items to skip (default 0).</param>
-        /// <param name="unreadOnly">If true, only unread notifications.</param>
+        /// <param name="filterStatus">"all" (default), "unread", or "read".</param>
         /// <param name="latitude">Optional caller latitude (recorded in audit log).</param>
         /// <param name="longitude">Optional caller longitude (recorded in audit log).</param>
         [HttpGet]

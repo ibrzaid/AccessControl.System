@@ -2,6 +2,7 @@ using ACS.Database.IDataAccess.NotificationsService.V1;
 using ACS.License.V1;
 using ACS.Models.Response.V1.NotificationsService.UserNotifications;
 using ACS.Notifications.WebService.Services.V1.Interfaces;
+using ACS.Service.V1.Interfaces;
 
 namespace ACS.Notifications.WebService.Services.V1.Services
 {
