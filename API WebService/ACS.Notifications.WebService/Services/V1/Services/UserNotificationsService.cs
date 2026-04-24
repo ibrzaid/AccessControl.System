@@ -17,7 +17,7 @@ namespace ACS.Notifications.WebService.Services.V1.Services
         };
 
         public async Task<UserNotificationsListResponse> GetUserNotificationsAsync(
-            string workspace, string user, int limit, int offset, bool unreadOnly,
+            string workspace, string user, int limit, int offset, string filterStatus,
             string? ip, string? userAgent, string? deviceInfo, string requestId,
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default)
@@ -34,9 +34,13 @@ namespace ACS.Notifications.WebService.Services.V1.Services
                         TotalCount: 0, UnreadCount: 0, HasMore: false, Notifications: []);
                 }
 
+                var normalised = (filterStatus ?? "all").ToLowerInvariant();
+                if (normalised != "all" && normalised != "read" && normalised != "unread")
+                    normalised = "all";
+
                 var license = this.LicenseManager.GetLicense();
                 var entity = await this[license!.DB!].GetUserNotificationsAsync(
-                    wid, uid, limit, offset, unreadOnly,
+                    wid, uid, limit, offset, normalised,
                     ip, userAgent, deviceInfo, requestId,
                     reqLatitude, reqLongitude, cancellationToken);
 

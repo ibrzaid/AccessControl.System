@@ -5,7 +5,7 @@ namespace ACS.Notifications.WebService.Services.V1.Interfaces
     public interface IUserNotificationsService
     {
         Task<UserNotificationsListResponse> GetUserNotificationsAsync(
-            string workspace, string user, int limit, int offset, bool unreadOnly,
+            string workspace, string user, int limit, int offset, string filterStatus,
             string? ip, string? userAgent, string? deviceInfo, string requestId,
             decimal reqLatitude, decimal reqLongitude,
             CancellationToken cancellationToken = default);
